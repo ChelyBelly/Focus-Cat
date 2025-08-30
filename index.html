@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Focus Cat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #ffe6f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+    }
+    .cat {
+      font-size: 5em;
+      display: block;
+      margin: 20px auto;
+    }
+    .stats {
+      font-size: 1.5em;
+      margin: 10px 0;
+    }
+    .buttons button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .start { background: #90ee90; }
+    .stop { background: #f08080; }
+    .reset { background: #add8e6; }
+    #yarn {
+      font-size: 3em;
+      display: none;
+      margin-top: 10px;
+    }
+    #mittensRow span {
+      font-size: 2em;
+      margin: 2px;
+    }
+    .knitting {
+      animation: knit 1s infinite alternate;
+    }
+    @keyframes knit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(10deg); }
+    }
+    select, input {
+      padding: 5px;
+      margin: 5px;
+      font-size: 1em;
+    }
+    /* Shop styling */
+    #shop {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fff0f5;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: inline-block;
+    }
+    #shop h2 {
+      margin-bottom: 10px;
+    }
+    .item {
+      margin: 5px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .item button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background: #ffe6e6;
+    }
+    .decoration {
+      font-size: 3em;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐱 Focus Cat</h1>
+  
+  <!-- Mode selection -->
+  <div>
+    <label for="mode">Mode:</label>
+    <select id="mode" onchange="toggleCountdownInput()">
+      <option value="up">Count Up</option>
+      <option value="down">Count Down</option>
+    </select>
+    <input type="number" id="countdownMinutes" placeholder="Minutes" style="display:none; width: 80px;">
+  </div>
+
+  <div class="stats">Time: <span id="time">0:00</span></div>
+  <div class="stats">Mittens Knitted: <span id="mittens">0</span></div>
+  <div id="mittensRow"></div>
+
+  <div>
+    <span id="catState" class="cat">🐱</span>
+    <span id="yarn">🧶</span>
+  </div>
+  <p id="status">Your cat is waiting... 😿</p>
+
+  <div class="buttons">
+    <button class="start" onclick="startTimer()">Start</button>
+    <button class="stop" onclick="stopTimer()">Stop</button>
+    <button class="reset" onclick="resetTimer()">Reset</button>
+  </div>
+
+  <!-- Shop -->
+  <div id="shop">
+    <h2>🛍️ Shop</h2>
+    <div class="item">🎀 Cat Bow (10 mittens) <button onclick="buyItem('bow',10)">Buy</button></div>
+    <div class="item">🪑 Cozy Chair (20 mittens) <button onclick="buyItem('chair',20)">Buy</button></div>
+    <div class="item">🌸 Flower Garden (30 mittens) <button onclick="buyItem('flowers',30)">Buy</button></div>
+    <h3>Decorations:</h3>
+    <div id="decorations"></div>
+  </div>
+
+  <script>
+    let seconds = 0;
+    let mittens = 0;
+    let running = false;
+    let timer;
+    let countdown = false;
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${sec.toString().padStart(2, "0")}`;
+    }
+
+    function updateDisplay() {
+      document.getElementById("time").textContent = formatTime(seconds);
+      document.getElementById("mittens").textContent = mittens;
+      const row = document.getElementById("mittensRow");
+      row.innerHTML = "";
+      for (let i = 0; i < mittens; i++) {
+        const span = document.createElement("span");
+        span.textContent = "🧤";
+        row.appendChild(span);
+      }
+    }
+
+    function toggleCountdownInput() {
+      const mode = document.getElementById("mode").value;
+      const input = document.getElementById("countdownMinutes");
+      if (mode === "down") {
+        input.style.display = "inline-block";
+      } else {
+        input.style.display = "none";
+      }
+    }
+
+    function startTimer() {
+      if (!running) {
+        const mode = document.getElementById("mode").value;
+        countdown = (mode === "down");
+
+        if (countdown) {
+          const mins = parseInt(document.getElementById("countdownMinutes").value) || 0;
+          seconds = mins * 60;
+        } else {
+          seconds = 0;
+        }
+
+        running = true;
+        document.getElementById("status").textContent = "Your cat is knitting mittens! 🧶";
+        document.getElementById("catState").textContent = "😺";
+        document.getElementById("catState").classList.add("knitting");
+        document.getElementById("yarn").style.display = "inline-block";
+
+        clearInterval(timer);
+        timer = setInterval(() => {
+          if (countdown) {
+            if (seconds > 0) {
+              seconds--;
+              if (seconds % 60 === 0) {
+                mittens += 2;
+              }
+            } else {
+              stopTimer();
+              document.getElementById("status").textContent = "Time's up! Cat finished knitting ⏰";
+            }
+          } else {
+            seconds++;
+            if (seconds % 60 === 0) {
+              mittens += 2;
+            }
+          }
+          updateDisplay();
+        }, 1000);
+      }
+    }
+
+    function stopTimer() {
+      running = false;
+      clearInterval(timer);
+      document.getElementById("status").textContent = "Your cat is waiting... 😿";
+      document.getElementById("catState").textContent = "🐱";
+      document.getElementById("catState").classList.remove("knitting");
+      document.getElementById("yarn").style.display = "none";
+    }
+
+    function resetTimer() {
+      running = false;
+      clearInterval(timer);
+      seconds = 0;
+      mittens = 0;
+      updateDisplay();
+      document.getElementById("status").textContent = "Your cat is waiting... 😿";
+      document.getElementById("catState").textContent = "🐱";
+      document.getElementById("catState").classList.remove("knitting");
+      document.getElementById("yarn").style.display = "none";
+      document.getElementById("decorations").innerHTML = "";
+    }
+
+    function buyItem(item, cost) {
+      if (mittens >= cost) {
+        mittens -= cost;
+        updateDisplay();
+        let deco = document.createElement("span");
+        deco.classList.add("decoration");
+        if (item === "bow") deco.textContent = "🎀";
+        if (item === "chair") deco.textContent = "🪑";
+        if (item === "flowers") deco.textContent = "🌸";
+        document.getElementById("decorations").appendChild(deco);
+      } else {
+        alert("Not enough mittens! 🧤");
+      }
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
